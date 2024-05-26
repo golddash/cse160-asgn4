@@ -6,6 +6,7 @@ class Cube {
     //this.size = 5.0;
     //this.segments = 10;
     this.matrix = new Matrix4();
+    //this.normalMatrix = new Matrix4();
     this.textureNum=-1;
     this.cubeVerts32 = new Float32Array([
       // Front face

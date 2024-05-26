@@ -7,7 +7,9 @@ var VSHADER_SOURCE = `
   attribute vec3 a_Normal;
   varying vec2 v_UV;
   varying vec3 v_Normal;
+  varying vec4 v_VertPos;
   uniform mat4 u_ModelMatrix;
+  uniform mat4 u_NormalMatrix;
   uniform mat4 u_GlobalRotateMatrix;
   uniform mat4 u_ViewMatrix;
   uniform mat4 u_ProjectionMatrix;
@@ -15,50 +17,9 @@ var VSHADER_SOURCE = `
     gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_GlobalRotateMatrix * u_ModelMatrix * a_Position;
     v_UV = a_UV;
     v_Normal = a_Normal;
+    //v_Normal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 1)));
+    v_VertPos = u_ModelMatrix * a_Position;
    }`;
-
-// // Fragment shader program
-// var FSHADER_SOURCE = `
-//   precision mediump float;
-//   uniform vec4 u_FragColor;
-//   varying vec2 v_UV;
-//   varying vec3 v_Normal;
-//   uniform sampler2D u_Sampler0;
-//   uniform sampler2D u_Sampler1;
-//   uniform sampler2D u_Sampler2;
-//   uniform sampler2D u_Sampler3;
-//   uniform sampler2D u_Sampler4;
-//   uniform int u_whichTexture;
-//   void main() {
-//     if (u_whichTexture == -3){
-//       gl_FragColor = vec4((v_Normal + 1.0) / 2.0, 1.0);
-//     }
-//     if (u_whichTexture == -2) {
-//       gl_FragColor = u_FragColor;
-//     }
-//     else if (u_whichTexture == -1) {
-//       gl_FragColor = vec4(v_UV, 1.0, 1.0);
-//     }
-//     else if (u_whichTexture == 0) {
-//       gl_FragColor = texture2D(u_Sampler0, v_UV);
-//     } 
-//     else if (u_whichTexture == 1) {
-//       gl_FragColor = texture2D(u_Sampler1, v_UV);
-//     } 
-//     else if (u_whichTexture == 2) {
-//       gl_FragColor = texture2D(u_Sampler2, v_UV);
-//     } 
-//     else if (u_whichTexture == 3) {
-//       gl_FragColor = texture2D(u_Sampler3, v_UV);
-//     }
-//     else if (u_whichTexture == 4) {
-//       gl_FragColor = texture2D(u_Sampler4, v_UV);
-//     } 
-//     else {
-//       gl_FragColor = vec4(1, 0.2, 0.2, 1.0);
-//     }
-    
-//   }`;
 
 // Fragment shader program
 var FSHADER_SOURCE = `
@@ -72,48 +33,71 @@ var FSHADER_SOURCE = `
   uniform sampler2D u_Sampler3;
   uniform sampler2D u_Sampler4;
   uniform int u_whichTexture;
+  uniform vec3 u_lightPos;
+  uniform vec3 u_cameraPos;
+  varying vec4 v_VertPos;
+  uniform bool u_lightOn;
   void main() {
-    if (u_whichTexture == -3) {
+    if (u_whichTexture == -3){
       gl_FragColor = vec4((v_Normal + 1.0) / 2.0, 1.0);
-      return;
     }
-  
     if (u_whichTexture == -2) {
       gl_FragColor = u_FragColor;
-      return;
     }
-  
-    if (u_whichTexture == -1) {
+    else if (u_whichTexture == -1) {
       gl_FragColor = vec4(v_UV, 1.0, 1.0);
-      return;
     }
-  
-    if (u_whichTexture == 0) {
+    else if (u_whichTexture == 0) {
       gl_FragColor = texture2D(u_Sampler0, v_UV);
-      return;
-    }
-  
-    if (u_whichTexture == 1) {
+    } 
+    else if (u_whichTexture == 1) {
       gl_FragColor = texture2D(u_Sampler1, v_UV);
-      return;
-    }
-  
-    if (u_whichTexture == 2) {
+    } 
+    else if (u_whichTexture == 2) {
       gl_FragColor = texture2D(u_Sampler2, v_UV);
-      return;
-    }
-  
-    if (u_whichTexture == 3) {
+    } 
+    else if (u_whichTexture == 3) {
       gl_FragColor = texture2D(u_Sampler3, v_UV);
-      return;
     }
-  
-    if (u_whichTexture == 4) {
+    else if (u_whichTexture == 4) {
       gl_FragColor = texture2D(u_Sampler4, v_UV);
-      return;
+    } 
+    else if (u_whichTexture < -4 || u_whichTexture > 4) {
+      gl_FragColor = vec4(1, 0.2, 0.2, 1.0); // Handle values less than -4 and greater than 4
     }
-  
-    gl_FragColor = vec4(1, 0.2, 0.2, 1.0); // Default case
+
+    //vec3 lightVector = vec3(v_VertPos) - u_lightPos;
+    vec3 lightVector =  u_lightPos - vec3(v_VertPos);
+    float r = length(lightVector);
+
+    // if (r <1.0) {
+    //   gl_FragColor = vec4(1,0,0,1);
+    // } else if (r < 2.0) {
+    //   gl_FragColor = vec4(0,1,0,1);
+    // }
+
+    // N dot L
+    vec3 L = normalize(lightVector);
+    vec3 N = normalize(v_Normal);
+    float nDotL = max(dot(N, L), 0.0);
+
+    // Reflection
+    vec3 R = reflect(-L, N);
+
+    // eye
+    vec3 E = normalize(u_cameraPos - vec3(v_VertPos));
+
+    // Specular
+    float specular = pow(max(dot(E,R), 0.0), 10.0);
+
+    vec3 diffuse = vec3(gl_FragColor) * nDotL * 0.7;
+    vec3 ambient = vec3(gl_FragColor) * 0.3;
+    //gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
+
+    if (u_lightOn) {
+      gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
+    }
+
     
   }`;
 
@@ -138,6 +122,10 @@ let u_Sampler4;
 let u_whichTexture;
 
 let a_Normal;
+let u_lightPos;
+let u_cameraPos;
+let u_lightOn;
+let u_NormalMatrix;
 
 
 
@@ -175,6 +163,34 @@ function connectVariablesToGLSL() {
     console.log("Failed to get the storage location of a_Normal");
     return;
   }
+
+  // Get the storage Location of u_lightPos
+  u_lightPos = gl.getUniformLocation(gl.program, "u_lightPos");
+  if (!u_lightPos) {
+    console.log("Failed to get the storage location of u_lightPos");
+    return;
+  }
+
+  // Get the storage Location of u_cameraPos
+  u_cameraPos = gl.getUniformLocation(gl.program, "u_cameraPos");
+  if (!u_cameraPos) {
+    console.log("Failed to get the storage location of u_cameraPos");
+    return;
+  }
+
+  // Get the storage Location of u_lightOn
+  u_lightOn = gl.getUniformLocation(gl.program, "u_lightOn");
+  if (!u_lightOn) {
+    console.log("Failed to get the storage location of u_lightOn");
+    return;
+  }
+
+  // // Get the storage Location of u_NormalMatrix
+  // u_NormalMatrix = gl.getUniformLocation(gl.program, "u_NormalMatrix");
+  // if (!u_NormalMatrix) {
+  //   console.log("Failed to get the storage location of u_NormalMatrix");
+  //   return;
+  // }
 
   // Get the storage location of u_FragColor
   u_FragColor = gl.getUniformLocation(gl.program, "u_FragColor");
@@ -298,12 +314,21 @@ let oldMouseX = 0;
 let oldMouseY = 0;
 
 let g_normalOn = false;
+let g_lightPos = [0,1,-2];
+let g_lightOn = true;
 
 function addActionsForHtmlUI() {
 
   // Button for normals
   document.getElementById("normalOn").onclick = function () {g_normalOn = true;};
   document.getElementById("normalOff").onclick = function () {g_normalOn = false;};
+
+  document.getElementById('lightSlideX').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[0] = this.value/100; renderAllShapes();}});
+  document.getElementById('lightSlideY').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[1] = this.value/100; renderAllShapes();}});
+  document.getElementById('lightSlideZ').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightPos[2] = this.value/100; renderAllShapes();}});
+
+  document.getElementById('lightOff').onclick = function () {g_lightOn= false;};
+  document.getElementById('lightOn').onclick = function () {g_lightOn= true;};
 
 
   // Camera angle
@@ -667,6 +692,8 @@ function updateAnimationAngles()
   if (g_leftEarAnimation) {
     g_leftEarAngle = 30 * Math.sin(g_seconds * 2 * Math.PI);
   }
+
+  g_lightPos[0] = Math.cos(g_seconds);
   
 }
 
@@ -802,6 +829,28 @@ function renderAllShapes() {
   gl.clear(gl.COLOR_BUFFER_BIT);
 
 
+  gl.uniform3f(u_lightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
+
+  gl.uniform3f(u_cameraPos, g_camera.eye.elements[0], g_camera.eye.elements[1], g_camera.eye.elements[2]);
+  //gl.uniform3f(u_cameraPos, g_camera.eye.x, g_camera.eye.y, g_camera.eye.z);
+
+  gl.uniform1i(u_lightOn, g_lightOn);
+
+  var light = new Cube();
+  light.color = [2,2,0,1];
+  light.textureNum = -2;
+  light.matrix.translate(g_lightPos[0], g_lightPos[1], g_lightPos[2]);
+  light.matrix.scale(-0.1,-0.1,-0.1);
+  light.matrix.translate(-0.5,-0.5,-0.5); 
+  light.render();
+
+  var sp = new Sphere();
+  if (g_normalOn) {
+    sp.textureNum = -3;
+  }
+  sp.matrix.translate(-2,0.5,-.5);
+  sp.render();
+
   var ground = new Cube();
   ground.color = [1.0, 0.0, 0.0, 1.0];
   ground.textureNum = 1;
@@ -812,7 +861,7 @@ function renderAllShapes() {
 
   var sky = new Cube();
   sky.color = [1.0, 0.0, 0.0, 1.0];
-  //sky.textureNum = 2;
+  // sky.textureNum = -1;
   if (g_normalOn) {
     sky.textureNum = -3;
   }
@@ -833,6 +882,7 @@ function renderAllShapes() {
   foxBack.matrix.rotate(0, 0, 0, 1);
   foxBack.matrix.scale(0.5,0.7,0.2);
   foxBack.matrix.translate(-0.5,0,0);
+  //foxBack.normalMatrix.setInverseOf(foxBack.matrix).transpose();
   foxBack.render();
 
   // Front of Fox Body

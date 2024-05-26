@@ -33,8 +33,17 @@
     <br>
     <button type="button" id="normalOn" class="button is-primary">Normals ON</button>
     <button type="button" id="normalOff" class="button is-primary">Normals OFF</button>
+    <button type="button" id="lightOn" class="button is-primary">Lights ON</button>
+    <button type="button" id="lightOff" class="button is-primary">Lights OFF</button>
+    <button class="button is-primary" id="resetButton">Reset Canvas to normal </button>
+ 
   
     <br><br>
+
+    Light X <input type="range" min="-250" max="250" value="0" class="slider" id="lightSlideX">
+    Light Y <input type="range" min="-250" max="250" value="0" class="slider" id="lightSlideY">
+    Light Z <input type="range" min="-250" max="250" value="0" class="slider" id="lightSlideZ">
+    <br>
 
     Camera Angle X 
     <input
@@ -44,7 +53,7 @@
     value="5"
     class="slider"
     id="angleXSlide">
-    <button class="button is-primary" id="resetButton">Reset Canvas to normal </button>
+
 
     <br>
     Camera Angle Y
@@ -106,6 +115,7 @@
     <script src="Cube.js"></script>
     <script src="Cone.js"></script>
     <script src="Camera.js"></script>
+    <script src="Sphere.js"></script>
    
 
     <script src="../lib/cuon-utils.js"></script>
