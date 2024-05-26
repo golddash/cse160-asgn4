@@ -37,6 +37,7 @@ var FSHADER_SOURCE = `
   uniform vec3 u_cameraPos;
   varying vec4 v_VertPos;
   uniform bool u_lightOn;
+  uniform vec4 u_lightColor;
   void main() {
     if (u_whichTexture == -3){
       gl_FragColor = vec4((v_Normal + 1.0) / 2.0, 1.0);
@@ -95,7 +96,7 @@ var FSHADER_SOURCE = `
     //gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
 
     if (u_lightOn) {
-      gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
+      gl_FragColor = u_lightColor * vec4(specular + diffuse + ambient, 1.0);
     }
 
     
@@ -126,6 +127,8 @@ let u_lightPos;
 let u_cameraPos;
 let u_lightOn;
 let u_NormalMatrix;
+let u_lightColor;
+//let u_spotlightOn;
 
 
 
@@ -184,6 +187,18 @@ function connectVariablesToGLSL() {
     console.log("Failed to get the storage location of u_lightOn");
     return;
   }
+
+  u_lightColor = gl.getUniformLocation(gl.program, "u_lightColor");
+  if (!u_lightColor) {
+    console.log("Failed to get the storage location of u_lightColor");
+    return;
+  }
+
+  // u_spotlightOn = gl.getUniformLocation(gl.program, "u_spotlightOn");
+  // if (!u_spotlightOn) {
+  //   console.log("Failed to get the storage location of u_spotlightOn");
+  //   return;
+  // }
 
   // // Get the storage Location of u_NormalMatrix
   // u_NormalMatrix = gl.getUniformLocation(gl.program, "u_NormalMatrix");
@@ -316,6 +331,9 @@ let oldMouseY = 0;
 let g_normalOn = false;
 let g_lightPos = [0,1,-2];
 let g_lightOn = true;
+let g_lightColor = [1,1,1,1];
+//let g_spotlightOn = false;
+let lightAnimationActive = true;
 
 function addActionsForHtmlUI() {
 
@@ -330,6 +348,16 @@ function addActionsForHtmlUI() {
   document.getElementById('lightOff').onclick = function () {g_lightOn= false;};
   document.getElementById('lightOn').onclick = function () {g_lightOn= true;};
 
+  document.getElementById('redSlide').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightColor[0] = this.value/100; renderAllShapes();}});
+  document.getElementById('greenSlide').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightColor[1] = this.value/100; renderAllShapes();}});
+  document.getElementById('blueSlide').addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {g_lightColor[2] = this.value/100; renderAllShapes();}});
+
+  // document.getElementById('spotlightOff').onclick = function () {g_spotlightOn= false;};
+  // document.getElementById('spotlightOn').onclick = function () {g_spotlightOn= true;};
+
+  document.getElementById('toggleLightAnimation').addEventListener('click', function() {
+    lightAnimationActive = !lightAnimationActive; // Toggle the state
+  });
 
   // Camera angle
   document
@@ -693,7 +721,10 @@ function updateAnimationAngles()
     g_leftEarAngle = 30 * Math.sin(g_seconds * 2 * Math.PI);
   }
 
-  g_lightPos[0] = Math.cos(g_seconds);
+  //g_lightPos[0] = Math.cos(g_seconds);
+  if (lightAnimationActive) {
+    g_lightPos[0] = Math.cos(g_seconds);
+  }
   
 }
 
@@ -836,8 +867,13 @@ function renderAllShapes() {
 
   gl.uniform1i(u_lightOn, g_lightOn);
 
+  gl.uniform4f(u_lightColor, g_lightColor[0], g_lightColor[1], g_lightColor[2], g_lightColor[3]);
+
+  //gl.uniform1i(u_spotlightOn, g_spotlightOn);
+
   var light = new Cube();
-  light.color = [2,2,0,1];
+  //light.color = [2,2,0,1];
+  light.color = g_lightColor;
   light.textureNum = -2;
   light.matrix.translate(g_lightPos[0], g_lightPos[1], g_lightPos[2]);
   light.matrix.scale(-0.1,-0.1,-0.1);

@@ -27,18 +27,29 @@
   </div>
     <br>
     <p class="has-text-centered is-size-5" id="theFPS">XXX</p>
-    <br>
-    <p class="has-text-centered is-size-5">My Fox is lost in the maze. Can you help me reunite with my friend? </p> 
+    <!-- <br>
+    <p class="has-text-centered is-size-5">My Fox is lost in the maze. Can you help me reunite with my friend? </p>  -->
 
     <br>
     <button type="button" id="normalOn" class="button is-primary">Normals ON</button>
     <button type="button" id="normalOff" class="button is-primary">Normals OFF</button>
-    <button type="button" id="lightOn" class="button is-primary">Lights ON</button>
-    <button type="button" id="lightOff" class="button is-primary">Lights OFF</button>
-    <button class="button is-primary" id="resetButton">Reset Canvas to normal </button>
+    <button type="button" id="lightOn" class="button is-warning">Lights ON</button>
+    <button type="button" id="lightOff" class="button is-warning">Lights OFF</button>
+    <!-- <button type="button" id="spotlightOn" class="button is-primary">Spotlight ON</button>
+    <button type="button" id="spotlightOff" class="button is-primary">Spotlight OFF</button> -->
+    <button type="button" id="toggleLightAnimation" class="button is-danger">Toggle Light Animation</button>
+
+
+    <button class="button is-success" id="resetButton">Reset Canvas to normal </button>
  
   
     <br><br>
+
+    Red <input type="range" min="0" max="100" value="100" class="slider" id="redSlide">
+    Green <input type="range" min="0" max="100" value="100" class="slider" id="greenSlide">
+    Blue <input type="range" min="0" max="100" value="100" class="slider" id="blueSlide">
+
+    <br>
 
     Light X <input type="range" min="-250" max="250" value="0" class="slider" id="lightSlideX">
     Light Y <input type="range" min="-250" max="250" value="0" class="slider" id="lightSlideY">
@@ -55,7 +66,7 @@
     id="angleXSlide">
 
 
-    <br>
+ 
     Camera Angle Y
     <input
     type="range"
@@ -65,7 +76,7 @@
     class="slider"
     id="angleSlide"
   />
-  <br>
+
   Camera Angle Z
   <input
   type="range"
